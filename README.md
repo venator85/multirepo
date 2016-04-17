@@ -44,11 +44,21 @@ Usage
 
 Simply run multirepo and pass the path of the manifest file as first argument:
 
-```
+```sh
 multirepo /path/to/manifest.xml
 ```
 
 For each project, if its `path` exists in the current directory, its `branch` will be checked out and pulled from its remote. If it doesn't exist, the repo will be cloned from its `url` in its `path`.
+
+Installation
+------------
+
+On OSX, install it via [Homebrew][2] tap:
+
+```sh
+brew tap venator85/multirepo https://github.com/venator85/multirepo/
+brew install multirepo
+```
 
 License
 =======
@@ -69,3 +79,4 @@ License
 
 
  [1]: https://code.google.com/p/git-repo/
+ [2]: http://brew.sh/
