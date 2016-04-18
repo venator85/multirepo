@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from lxml import etree
+import xml.etree.ElementTree
 import sys
 import subprocess
 import os
@@ -43,7 +43,7 @@ def main(argv):
 		printerr("Usage: multirepo <manifest-file>")
 		return 1
 	
-	tree = etree.parse(sys.argv[1])
+	tree = xml.etree.ElementTree.parse(sys.argv[1])
 	root = tree.getroot()
 	
 	projects = [node for node in root if node.tag == 'project']
