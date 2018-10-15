@@ -50,6 +50,12 @@ multirepo /path/to/manifest.xml
 
 For each project, if its `path` exists in the current directory, its `branch` will be checked out and pulled from its remote. If it doesn't exist, the repo will be cloned from its `url` in its `path`.
 
+If you pass more arguments, they will be used to invoke git in each project directory. For example, to push all projects:
+
+```sh
+multirepo /path/to/manifest.xml push
+```
+
 Installation
 ------------
 

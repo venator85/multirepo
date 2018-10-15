@@ -20,14 +20,17 @@ def runcmd(cmd, cwd=None, msg=None):
 	if msg != None:
 		printmsg("%s" % (msg))
 	printcmd(cmd)
-	pipe = subprocess.Popen(cmd, shell=True, cwd=cwd, stdout=None, stderr=None)
+	shell = type(cmd) != list
+	pipe = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdout=None, stderr=None)
 	pipe.communicate()	# wait for process to terminate
 	retcode = pipe.returncode
 	if retcode != 0:
 		raise RuntimeError("Command '%s' failed with return code %d" % (cmd, retcode))
 
 def printcmd(msg):
-	print "%s-- %s%s" % (colors['bold_black'], msg, colors['none'])
+	if type(msg) == list:
+		msg = " ".join(msg)
+	print "%s-- %s%s" % (colors['yellow'], msg, colors['none'])
 
 def printmsg(msg):
 	print "%s>> %s%s" % (colors['bold_blue'], msg, colors['none'])
@@ -39,8 +42,8 @@ def printwarn(msg):
 	print "%s!! %s%s" % (colors['bold_yellow'], msg, colors['none'])
 
 def main(argv):
-	if len(argv) != 2:
-		printerr("Usage: multirepo <manifest-file>")
+	if len(argv) < 2:
+		printerr("Usage: multirepo <manifest-file> [git commands]")
 		return 1
 	
 	tree = xml.etree.ElementTree.parse(sys.argv[1])
@@ -48,22 +51,37 @@ def main(argv):
 	
 	projects = [node for node in root if node.tag == 'project']
 	
-	for project in projects:
-		try:
-			url = project.attrib['url']
+	if len(argv) == 2:
+		for project in projects:
+			try:
+				url = project.attrib['url']
+				path = project.attrib['path']
+				branch = project.attrib['branch']
+				if os.path.isdir(path):
+					message = "Pulling latest changes for '%s'" % (url)
+					runcmd("git checkout '%s'" % (branch), cwd=path, msg=message)
+					runcmd("git pull", cwd=path)
+				else:
+					message = "Cloning '%s'" % (url)
+					runcmd("git clone -b '%s' '%s' '%s'" % (branch, url, path), msg=message)
+			except RuntimeError as e:
+				printerr(str(e))
+				return 1
+	else:
+		gitargs = ['git', '--no-pager'] + argv[2:]
+		for project in projects:
 			path = project.attrib['path']
-			branch = project.attrib['branch']
 			if os.path.isdir(path):
-				message = "Pulling latest changes for '%s'" % (url)
-				runcmd("git checkout '%s'" % (branch), cwd=path, msg=message)
-				runcmd("git pull", cwd=path)
+				try:
+					message = "Executing command for '%s'" % (path)
+					runcmd(gitargs, cwd=path, msg=message)
+				except RuntimeError as e:
+					printerr(str(e))
+					return 1
 			else:
-				message = "Cloning '%s'" % (url)
-				runcmd("git clone -b '%s' '%s' '%s'" % (branch, url, path), msg=message)
-		except RuntimeError as e:
-			printerr(str(e))
-			return 1
-		
+				printerr("Local copy of repo '%s' not found" % (path))
+				return 1
+
 	printmsg("Done!")
 	return 0
 	
